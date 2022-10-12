@@ -1,0 +1,450 @@
+---
+title: "ESS-NS Experimentation"
+author: 
+  - name: "Jan Strappa"
+    url: https://github.com/jstrappa/
+  - "Paola Caymes-Scutari"
+  - "Germán Bianchini"
+format:
+  html:
+    toc: true
+    toc-depth: 4
+    toc-location: left
+    code-fold: true
+    code-summary: "Show code"
+    code-tools: true
+    self-contained: true
+bibliography: references.bib
+---
+
+
+# Supplementary Material
+
+## Introduction
+
+This notebook, source code and data are provided as additional material for the paper *"Evolutionary Statistical System with Novelty Search: a Parallel Metaheuristic for Uncertainty Reduction Applied to Wildfire Spread Prediction"*.
+This report contains the same results published in the paper, with slight modifications and additional tools that allow for better visualization and exploration of those results.
+
+The first two sections have both a static and an interactive version of the code. 
+The plots shown by default are from the interactive version, made with the `plotly` package.
+The complete source code can be seen by opening this notebook in an editor, together with the `functions.R` script, which contains most of the code for static plots.
+
+
+### License
+
+The contents of this notebook can be modified and reused for non-commercial purposes with attribution to its authors. 
+
+### Authors and institutional information
+
++ Jan Strappa<sup>(1,2)</sup>: 
+  - ORCiD ID: [0000-0003-3008-0905](https://orcid.org/0000-0003-3008-0905)
+  - email: jstrappa at frm.utn.edu.ar
+
++ Paola Caymes-Scutari<sup>(1,2)</sup>:
+  - ORCiD ID: [0000-0002-6792-0472](https://orcid.org/0000-0002-6792-0472)
+  - email: pcaymesscutari at frm.utn.edu.ar
+
++ Germán Bianchini<sup>(2)</sup>: 
+  - ORCiD ID: [0000-0003-3609-9076](https://orcid.org/0000-0003-3609-9076)
+  - email: gbianchini at frm.utn.edu.ar
+
+1: Consejo Nacional de Investigaciones Científicas y Técnicas (CONICET), Mendoza, Argentina.
+
+2: Facultad Regional Mendoza, Universidad Tecnológica Nacional, Argentina.
+
+
+## Related work 
+
+Previous conference article of this work:
+
++ ESS-NS: [@strappaParallelNoveltySearch2022].
+
+Competitor methods:
+
++ ESS: [@bianchiniEvolutionaryStatisticalSystemParallel2015].
++ ESSIM-EA: [@mendezgarabettiComparativeAnalysisPerformance2015, @mendezgarabettiESSIMEAAppliedWildfire2017].
++ ESSIM-DE: [@tardivoComparativeStudyEvolutionary2017,@tardivoParalelizacionSintonizacionEvolucion, @tardivoHierarchicalParallelModel2017, @tardivoOptimizationUncertaintyReduction2018, @caymesscutariDynamicTuningForest2020].
+
+
+## Experimentation
+
+### Preliminary requirements
+
+```{r required, message=FALSE, warning=FALSE}
+#| echo: true
+knitr::opts_chunk$set(message = FALSE,
+                      warning = FALSE
+                      #cache = TRUE
+)
+
+source("functions.R")
+#maps <- factor(levels=c('533','519','751','534','520'))
+#maps <- c(533,519,751,534,520)
+maps <- c('533','519','751','534','520')
+```
+
+### Results
+
+#### Average Fitness: ESS-NS vs ESS, ESSIM-EA, and ESSIM-DE
+
+All methods are compared over 5 cases of controlled fires, labeled by numbers (751, 520, 533, 519, 534).
+The x-axis corresponds to prediction steps, while the y-axis shows the average fitness for each step.
+
+```{r plot-fitness-averages-static, eval = FALSE, fig.show = "hold", out.width = "50%"}
+#| code-summary: "Show static version code"
+# Static version
+for (mapn in maps){
+  csvname <- c("../data/all_fitness_",mapn,".csv")
+  fitness_filename <- paste(csvname, collapse="")
+  plot_fitness_averages(maps, fitness_filename, save = FALSE)
+}
+```
+
+```{r plot-fitness-averages-interactive, eval = TRUE}
+#| code-summary: "Show interactive version code (plotly)"
+# Interactive version
+plotlist = list()
+i = 1
+for (mapn in maps) {
+  csvname <- c("../data/all_fitness_", mapn, ".csv")
+  fitness_filename <- paste(csvname, collapse = "")
+  
+  # 30 seeds + 2 columns for method and step number
+  limit = 32
+  
+  # Read csv with fitness for every method, step and seed
+  fitness_all_seeds = read_delim(
+    fitness_filename,
+    col_names = TRUE,
+    show_col_types = FALSE,
+    skip = 1,
+    delim = ','
+  )
+  
+  # There are some missing values in previous results. Replace zeros with NA
+  fitness_all_seeds <-
+    fitness_all_seeds %>% mutate(across(3:limit,  ~ na_if(., 0)))
+  
+  # Convert to factor and define order of levels
+  # Makes it easier to use the palette as intended for plotting
+  fitness_all_seeds$method <- factor(fitness_all_seeds$method,
+                                     levels = c("ESS-NS", "ESSIM-EA",
+                                                "ESSIM-DE", "ESS"))
+  
+  # Compute mean and standard deviation. Omit NAs
+  fitness_all_seeds_mean <- fitness_all_seeds  %>%
+    rowwise() %>%
+    mutate(m = mean(c_across(3:limit), na.rm = TRUE),
+           sd = sd(c_across(3:limit), na.rm = TRUE))
+  
+  # Plot average fitness
+  p <-
+    ggplot(data = fitness_all_seeds_mean, aes(
+      group = method,
+      colour = method,
+      shape = method
+    )) +
+    geom_line(data = fitness_all_seeds_mean, aes(x = step, y = m),
+              size = 1.5) +  
+    geom_point(data = fitness_all_seeds_mean, aes(x = step, y = m),
+               size = 4)    +                 # size of points
+    scale_color_manual(values = cbp) +      
+    ylab("average fitness\n") +               # y axis label
+    scale_x_discrete(name = "prediction step",
+                     limits = unique(as.vector(fitness_all_seeds_mean$step))) +
+    scale_y_continuous(limits = c(0.25, 1), breaks = seq(0, 1, 0.1)) +
+    theme(
+      text = element_text(size = 16),
+      panel.grid.minor = element_line(
+        colour = "lightgray",
+        linetype = "solid",
+        size = 0.3
+      ),
+      panel.grid.major = element_line(
+        colour = "lightgray",
+        linetype = "solid",
+        size = 0.6
+      )
+    ) +
+    theme(plot.margin = unit(c(1,1,2.5,1), "cm")) +
+    ggtitle(mapn)                           # for the main title
+  
+  plotlist[[i]] = ggplotly(p, height = 600)
+  i = i + 1
+}
+```
+
+```{r output-fitness-average, echo = FALSE}
+# This line shows the plots
+htmltools::tagList(setNames(plotlist, NULL))
+```
+
+
+#### Fitness distribution
+
+Fitness distribution for the 30 repetitions of each run. Each method is shown in a different color. Column number corresponds to prediction step. The y-axis corresponds to the fitness value. 
+
+```{r fitness-distribution-static, cache = TRUE, eval = FALSE}
+#| code-summary: "Show static version code"
+# Static version
+for (mapn in maps) {
+  csvname <- c("../data/all_fitness_", mapn, ".csv")
+  fitness_filename <- paste(csvname, collapse = "")
+  plot_fitness_distribution(maps,
+                            fitness_filename,
+                            save = FALSE,
+                            jitter = TRUE)
+}
+```
+
+```{r plot-fitness-distribution-interactive, eval = TRUE, cache = FALSE}
+#| code-summary: "Show interactive version code (plotly)"
+# Interactive version
+jitter = FALSE
+plotlist_d = list()
+i = 1
+for (mapn in maps) {
+  csvname <- c("../data/all_fitness_", mapn, ".csv")
+  fitness_filename <- paste(csvname, collapse = "")
+  
+  # 30 seeds + 2 columns for method and step number
+  limit = 32
+  
+  # Read csv with fitness for every method, step and seed
+  fitness_all_seeds = read_delim(
+    fitness_filename,
+    col_names = TRUE,
+    show_col_types = FALSE,
+    skip = 1,
+    delim = ','
+  )
+  
+  # Replace missing values (coded as 0 in the csv) by NAs
+  fitness_all_seeds <-
+    fitness_all_seeds %>% mutate(across(3:limit,  ~ na_if(., 0)))
+  
+  # Convert to factor and define order of levels
+  # Makes it easier to use the palette as intended for plotting
+  fitness_all_seeds$method <-
+    factor(fitness_all_seeds$method,
+           levels = c("ESS-NS", "ESSIM-EA", "ESSIM-DE", "ESS"))
+  
+  df <- gather(fitness_all_seeds, "seed", "fitness", 3:limit) %>%
+    select(-seed) 
+  
+  # Plot, omit NAs.
+  p <- ggplot(df %>% filter(!is.na(method)),
+              aes(
+                x = method,
+                y = fitness,
+                color = method,
+                group = method
+              )) +
+    facet_wrap( ~ step, nrow = 1) + # one column per prediction step
+    scale_color_manual(values = cbp) +
+    theme(
+      text = element_text(size = 16),
+      axis.text.x = element_text(
+        angle = 45,
+        hjust = 1,
+        size = 10,
+        color = cbp
+      ),
+      axis.title.x = element_text(
+        margin = margin(t = 20)
+      )
+    ) +
+    theme(plot.margin = unit(c(0.5,0.5,2,0.5), "cm")) +
+    ggtitle(mapn)  # for the main title
+  
+  
+  if (jitter) {
+    p <-
+      p + geom_boxplot(outlier.shape = NA) +  # avoid duplicating outliers
+      geom_jitter()
+  } else {
+    p <- p + geom_boxplot()
+  }
+  
+  
+  p <- plotly_build(p)
+  
+  plotlist_d[[i]] = p
+  i = i + 1
+}
+```
+
+
+```{r output-fitness-distribution, echo = FALSE}
+# This line shows the plots
+htmltools::tagList(setNames(plotlist_d, NULL))
+```
+
+## Appendix: Calibration
+
+### Description of the experiment
+
+Calibration was performed by varying two parameters: tournament probability and mutation probability. 
+
+The values vary among the following:
+
+$tour\_prob \in \{ 0.75, 0.8, 0.85, 0.9 \}$
+
+$mut\_prob \in \{ 0.1, 0.2, 0.3, 0.4 \}$
+
+
+### Results
+
+#### Fitness averages over different combinations of parameters
+
+There is one table for each controlled fire.
+In each table, the rows show the fitness values, averaged over 30 repetitions, for a particular configuration of the parameters.
+For columns labeled by numbers, the number indicates the prediction step.
+The $m$ column is the average fitness over all steps, and the last column, $t (s)$, shows total runtime values in seconds. The runtimes for each repetition correspond to the whole execution (including all steps); the runtimes shown are averaged over 30 repetitions.
+The darker the color, the better the results, both for quality (fitness) and runtimes.
+
+```{r calibration-heatmap, echo=FALSE, results='asis', warning=FALSE}
+#| code-summary: "Show function call (see functions.R)"
+# Render heatmap tables
+means_and_configs <- calibration_heatmap(maps,"html")
+```
+
+We computed the mean squared error (MSE) for each combination, using $1-\bar{f}$ (where $\bar{f}$ is the average fitness over all prediction steps, shown in column $m$ in the tables above) as the error.
+Formally, for each combination of parameters $\{tour\_prob,mut\_prob\}$, we computed:
+
+\begin{equation}\label{eq:mse}
+  MSE_{tour,mut} = \frac{1}{n}{\sum_{i=1}^n{(1 - \bar{f}_i)^2}}
+\end{equation}
+
+where $\bar{f}_i$ is the fitness average over all steps for each map, and $n$ is the number of experiments, in this case, 5, corresponding to the 5 controlled fires.
+
+The best combination by this criterion is:
+
+```{r calibration-evaluation}
+means <- means_and_configs[[1]]
+configurations <- means_and_configs[[2]]
+errors <- (1 - means) ^ 2
+mse_data <-
+  as.data.frame(errors) %>% rowwise %>% mutate(mse = mean(c_across(1:5)))
+best <- which.min(mse_data$mse)
+print(configurations[best])
+```
+
+#### Runtime analysis
+
+The jitter (small black dots) shows the distribution of ESS-NS results for the 16 parameter combinations. 
+The bigger black dots are the average runtime of ESS-NS over these combinations.
+The remaining points (in different shapes and colors) represent the average runtimes for ESS, ESSIM-EA and ESSIM-DE over 30 repetitions. 
+Each label on the x-axis is a different controlled fire case. The y-axis is the runtime in human-readable format (hours, minutes, seconds).
+
+```{r calibration-runtime-distribution-static, echo = FALSE, eval = FALSE}
+#| code-summary: "Show function call for static version (for complete code see functions.R)"
+plot_runtime_distribution(maps, save = FALSE)
+```
+
+```{r calibration-runtime-distribution-plotly}
+#| code-summary: "Show code for interactive version"
+library(scales)
+library(lubridate)
+
+
+competitors <-
+  read_csv(
+    "../data/runtimes_competitors.csv",
+    col_names = TRUE,
+    col_types = list(col_character(), col_guess(), col_guess(), col_guess())
+  )
+
+competitors <- competitors %>% mutate(map = factor(map, levels=maps)) #%>% 
+  
+tournament_parameters = c("0.75", "0.8", "0.85", "0.9")
+mutation_parameters = c("0.1", "0.2", "0.3", "0.4")
+
+n_configurations = length(tournament_parameters) * length(mutation_parameters)
+data <-
+  tibble(map = factor(),
+         t = numeric(),
+         h = vctrs::new_duration(1))
+
+for (mapn in maps) {
+  for (tour in tournament_parameters) {
+    for (mut in mutation_parameters) {
+      timesname = c(
+        "../data/calibration_results/",
+        mapn,
+        "/avg_execution_time_",
+        tour,
+        "_MUT",
+        mut,
+        ".csv"
+      )
+      runtime = read_csv(
+        paste(timesname, collapse = ""),
+        col_names = c("map", "t", "h"),
+        col_types = list(col_character(), col_double(), col_guess())
+      )
+      runtime <- runtime %>% mutate(map = factor(map))
+      data <- add_row(data, runtime)
+    }
+  }
+}
+
+data <- data %>% rename('time' = h) 
+
+data$time <- seconds_to_period(data$t)
+
+ns_times <- data %>%
+  group_by(map) %>% 
+  summarise(across(t, mean)) %>% 
+  mutate(map = fct_reorder(map, maps)) 
+
+
+# TODO convertir a HH:MM:SS
+#seconds_to_period(ns_times$time)
+
+all_times <- competitors %>% add_column("ESS-NS" = ns_times$t, .before = "ESSIM-EA")
+
+# Convert to longer format for plotting
+d <- melt(all_times, id.vars="map", value.name = "time") %>% rename(method = variable)
+
+#Time conversions
+d$time <- round(seconds_to_period(d$time))
+data$time <- round(seconds_to_period(data$t))
+
+# Plot runtime averages
+p <-ggplot(d, aes(map, time, col=d$method), show.legend = FALSE) + 
+  geom_point(size = 4, aes(shape = method)) + 
+  scale_y_time(breaks = date_breaks('30 min'), labels = date_format('%H:%M')) +
+  theme(text = element_text(size = 20)) +
+  geom_jitter(data = data, aes(x=map,y=time), color = cbp[1], show.legend = FALSE) +
+  scale_color_manual(values = cbp) +
+  ylab("execution time\n\n\n\n\n\n") +
+  ggtitle("Runtime distribution for ESS-NS")  +
+  guides(color = guide_legend(title = ""))
+
+#ggplotly(p)
+
+ggplotly(p, tooltip = c("method", "map", "time"))
+```
+
+
+
+## Acknowledgments
+
+This supplementary material and the corresponding article have been supported by Universidad Tecnológica Nacional under the project SIU-TIME0007840TC, and by CONICET (Argentinean Council for Scientific and Technological Research) through a postdoctoral scholarship for Jan Strappa.
+
+We wish to thank María Laura Tardivo (ORCiD ID: [0000-0003-1268-7367](https://orcid.org/0000-0003-1268-7367), Universidad Nacional de Río Cuarto, Argentina) for providing primary results for the fitness and average runtimes of the methods ESS, ESSIM-EA and ESSIM-DE.
+These results were first published in [@tardivoComparativeStudyEvolutionary2017] and [@tardivoParalelizacionSintonizacionEvolucion, chap. 5], and are used here with her permission.
+
+
+## References
+
+
+
+
+
+
+
+
+
+
