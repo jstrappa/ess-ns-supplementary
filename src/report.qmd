@@ -27,12 +27,10 @@ This report contains the same results published in the paper, with slight modifi
 
 The first two sections have both a static and an interactive version of the code. 
 The plots shown by default are from the interactive version, made with the `plotly` package.
-The complete source code can be seen by opening this notebook in an editor, together with the `functions.R` script, which contains most of the code for static plots.
 
+The repository with the primary data and the source code is available at [https://github.com/jstrappa/ess-ns-supplementary](https://github.com/jstrappa/ess-ns-supplementary/tree/main). 
+The complete source code can be seen by opening the source for this notebook in an editor, together with the `functions.R` script, which contains most of the code for static plots. 
 
-### License
-
-The contents of this notebook can be modified and reused for non-commercial purposes with attribution to its authors. 
 
 ### Authors and institutional information
 
@@ -51,6 +49,16 @@ The contents of this notebook can be modified and reused for non-commercial purp
 1: Consejo Nacional de Investigaciones Científicas y Técnicas (CONICET), Mendoza, Argentina.
 
 2: Facultad Regional Mendoza, Universidad Tecnológica Nacional, Argentina.
+
+
+### License
+
+```{=html}
+
+<a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/3.0/"><img alt="Creative Commons License" style="border-width:0" src="https://i.creativecommons.org/l/by-nc-sa/3.0/88x31.png" /></a><br />This work is licensed under a <a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/3.0/">Creative Commons Attribution-NonCommercial-ShareAlike 3.0 Unported License</a>.
+
+```
+
 
 
 ## Related work 
@@ -78,8 +86,8 @@ knitr::opts_chunk$set(message = FALSE,
 )
 
 source("functions.R")
-#maps <- factor(levels=c('533','519','751','534','520'))
-#maps <- c(533,519,751,534,520)
+# TODO change order
+maps <- c('520','533','751','519','534')
 maps <- c('533','519','751','534','520')
 ```
 
@@ -166,10 +174,10 @@ for (mapn in maps) {
         size = 0.6
       )
     ) +
-    theme(plot.margin = unit(c(1,1,2.5,1), "cm")) +
+    theme(plot.margin = unit(c(1,1,2.5,1), "cm")) + # to have a little more space between plots
     ggtitle(mapn)                           # for the main title
   
-  plotlist[[i]] = ggplotly(p, height = 600)
+  plotlist[[i]] = ggplotly(p, height = 600, tooltip = c("step","m"))
   i = i + 1
 }
 ```
@@ -251,7 +259,7 @@ for (mapn in maps) {
         color = cbp
       ),
       axis.title.x = element_text(
-        margin = margin(t = 20)
+        margin = margin(t = 18)
       )
     ) +
     theme(plot.margin = unit(c(0.5,0.5,2,0.5), "cm")) +
@@ -347,7 +355,6 @@ plot_runtime_distribution(maps, save = FALSE)
 library(scales)
 library(lubridate)
 
-
 competitors <-
   read_csv(
     "../data/runtimes_competitors.csv",
@@ -398,10 +405,6 @@ ns_times <- data %>%
   summarise(across(t, mean)) %>% 
   mutate(map = fct_reorder(map, maps)) 
 
-
-# TODO convertir a HH:MM:SS
-#seconds_to_period(ns_times$time)
-
 all_times <- competitors %>% add_column("ESS-NS" = ns_times$t, .before = "ESSIM-EA")
 
 # Convert to longer format for plotting
@@ -415,7 +418,7 @@ data$time <- round(seconds_to_period(data$t))
 p <-ggplot(d, aes(map, time, col=d$method), show.legend = FALSE) + 
   geom_point(size = 4, aes(shape = method)) + 
   scale_y_time(breaks = date_breaks('30 min'), labels = date_format('%H:%M')) +
-  theme(text = element_text(size = 20)) +
+  theme(text = element_text(size = 16)) +
   geom_jitter(data = data, aes(x=map,y=time), color = cbp[1], show.legend = FALSE) +
   scale_color_manual(values = cbp) +
   ylab("execution time\n\n\n\n\n\n") +
@@ -429,12 +432,19 @@ ggplotly(p, tooltip = c("method", "map", "time"))
 
 
 
-## Acknowledgments
+## Funding and Acknowledgments
 
-This supplementary material and the corresponding article have been supported by Universidad Tecnológica Nacional under the project SIU-TIME0007840TC, and by CONICET (Argentinean Council for Scientific and Technological Research) through a postdoctoral scholarship for Jan Strappa.
+This supplementary material and the corresponding article have been supported by:
+
++ Universidad Tecnol\'ogica Nacional under the project SIUTIME0007840TC,
++ FONCyT (Fondo para la Investigaci\'on Cient\'ifica y Tecnol\'ogica, Agencia Nacional de Promoci\'on de la Investigaci\'on, el Desarrollo Tecnol\'ogico y la Innovaci\'on, Argentina) under the project UUMM-2019-00042,
++ CONICET (Consejo Nacional de Investigaciones Cient\'ificas y T\'ecnicas) through a postdoctoral scholarship for the first author.
 
 We wish to thank María Laura Tardivo (ORCiD ID: [0000-0003-1268-7367](https://orcid.org/0000-0003-1268-7367), Universidad Nacional de Río Cuarto, Argentina) for providing primary results for the fitness and average runtimes of the methods ESS, ESSIM-EA and ESSIM-DE.
-These results were first published in [@tardivoComparativeStudyEvolutionary2017] and [@tardivoParalelizacionSintonizacionEvolucion, chap. 5], and are used here with her permission.
+These results were first published in summarized form in [@tardivoComparativeStudyEvolutionary2017] and [@tardivoParalelizacionSintonizacionEvolucion, chap. 5], and are used here with her permission.
+
+Thanks are also due to the LIDIC laboratory (Laboratorio de Investigación y Desarrollo en Inteligencia Computacional), Universidad Nacional de San Luis, Argentina, for providing the hardware equipment for the experimentation.
+
 
 
 ## References

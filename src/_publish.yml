@@ -1,0 +1,4 @@
+- source: report.qmd
+  quarto-pub:
+    - id: 04987d70-1f83-4a29-b132-60ec610b5042
+      url: 'https://quartopub.com/sites/jstrappa/ess-ns-experimentation'
