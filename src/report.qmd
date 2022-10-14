@@ -26,7 +26,7 @@ This notebook, source code and data are provided as additional material for the 
 This report contains the same results published in the paper, with slight modifications and additional tools that allow for better visualization and exploration of those results.
 
 The first two sections have both a static and an interactive version of the code. 
-The plots shown by default are from the interactive version, made with the `plotly` package.
+The plots shown by default are from the interactive version, made using R with the `plotly` package.
 
 The repository with the primary data and the source code is available at [https://github.com/jstrappa/ess-ns-supplementary](https://github.com/jstrappa/ess-ns-supplementary/tree/main). 
 The complete source code can be seen by opening the source for this notebook in an editor, together with the `functions.R` script, which contains most of the code for static plots. 
@@ -48,7 +48,7 @@ The complete source code can be seen by opening the source for this notebook in 
 
 1: Consejo Nacional de Investigaciones Científicas y Técnicas (CONICET), Mendoza, Argentina.
 
-2: Facultad Regional Mendoza, Universidad Tecnológica Nacional, Argentina.
+2: [Laboratorio de Investigación en Cómputo Paralelo/Distribuido (LICPaD)](http://www1.frm.utn.edu.ar/licpad/), Facultad Regional Mendoza, Universidad Tecnológica Nacional, Argentina.
 
 
 ### License
@@ -436,9 +436,9 @@ ggplotly(p, tooltip = c("method", "map", "time"))
 
 This supplementary material and the corresponding article have been supported by:
 
-+ Universidad Tecnol\'ogica Nacional under the project SIUTIME0007840TC,
-+ FONCyT (Fondo para la Investigaci\'on Cient\'ifica y Tecnol\'ogica, Agencia Nacional de Promoci\'on de la Investigaci\'on, el Desarrollo Tecnol\'ogico y la Innovaci\'on, Argentina) under the project UUMM-2019-00042,
-+ CONICET (Consejo Nacional de Investigaciones Cient\'ificas y T\'ecnicas) through a postdoctoral scholarship for the first author.
++ Universidad Tecnológica Nacional under the project SIUTIME0007840TC,
++ FONCyT (Fondo para la Investigación Científica y Tecnológica, Agencia Nacional de Promoción de la Investigación, el Desarrollo Tecnológico y la Innovación, Argentina) under the project UUMM-2019-00042,
++ CONICET (Consejo Nacional de Investigaciones Científicas y Técnicas) through a postdoctoral scholarship for the first author.
 
 We wish to thank María Laura Tardivo (ORCiD ID: [0000-0003-1268-7367](https://orcid.org/0000-0003-1268-7367), Universidad Nacional de Río Cuarto, Argentina) for providing primary results for the fitness and average runtimes of the methods ESS, ESSIM-EA and ESSIM-DE.
 These results were first published in summarized form in [@tardivoComparativeStudyEvolutionary2017] and [@tardivoParalelizacionSintonizacionEvolucion, chap. 5], and are used here with her permission.
